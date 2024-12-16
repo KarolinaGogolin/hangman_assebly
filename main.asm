@@ -4,9 +4,9 @@ section .data
 ; Define constants
     EXIT_SUCCESS equ 0 ; successful operation
     SYS_exit equ 60 ; call code for terminate
-    guesses_left db 10
+    guesses_left db 7
     ; align 4
-    incorrect_chars_arr db "Incorrect guesses: ",0,0,0,0,0,0,0,0,0,0,10,0 ;the amount of 0 should match the guesses_left + null terminator
+    incorrect_chars_arr db "Incorrect guesses: ",0,0,0,0,0,0,0,10,0 ;the amount of 0 should match the guesses_left + null terminator
     incorrect_chars_l equ $-incorrect_chars_arr
 
 section .bss
@@ -24,6 +24,7 @@ extern read_guess
 extern process_guess
 extern initialise_guessed_word
 extern update_incorrect_guesses
+extern print_ascii_art
 
 _start:
 ; mov rdx, [temp2]
@@ -88,6 +89,11 @@ call print_instruction
 lea rsi, [guessed_word]
 mov rdx, 20                
 call print_instruction
+
+mov rdi, 7
+movzx rax, byte[guesses_left] ; loading a byte of guesses left into rax to zero extend it
+sub rdi, rax
+call print_ascii_art
 
 cmp byte[guesses_left],0
 jne NextGuess

@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Set the names of the files
-FILES="main.asm read_secret_function.asm is_valid_input.asm is_valid_length.asm print_instruction.asm to_lower_case_function.asm clear_buffer.asm read_guess.asm process_guess.asm check_lose_condition.asm check_win_condition.asm initialise_guessed_word.asm update_incorrect_guesses.asm"
-OUTPUT_FILES="main.o is_valid_input.o is_valid_length.o print_instruction.o read_secret_function.o to_lower_case_function.o clear_buffer.o read_guess.o process_guess.o check_lose_condition.o check_win_condition.o initialise_guessed_word.o update_incorrect_guesses.o" #explicitly doing that cause we have other files with .o that we used for testing so cant to *.o and im too lazy to put them somewhere else
+FILES="main.asm read_secret_function.asm is_valid_input.asm is_valid_length.asm print_instruction.asm to_lower_case_function.asm clear_buffer.asm read_guess.asm process_guess.asm check_lose_condition.asm check_win_condition.asm initialise_guessed_word.asm update_incorrect_guesses.asm print_ascii_art.asm"
+OUTPUT_FILES="main.o is_valid_input.o is_valid_length.o print_instruction.o read_secret_function.o to_lower_case_function.o clear_buffer.o read_guess.o process_guess.o check_lose_condition.o check_win_condition.o initialise_guessed_word.o update_incorrect_guesses.o print_ascii_art.o" #explicitly doing that cause we have other files with .o that we used for testing so cant to *.o and im too lazy to put them somewhere else
 PROGRAM="hangman"
 
 # Compilation and linking options
