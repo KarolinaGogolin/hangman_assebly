@@ -4,13 +4,16 @@ section .data
 ; Define constants
     EXIT_SUCCESS equ 0 ; successful operation
     SYS_exit equ 60 ; call code for terminate
-    guesses_left db 13
+    guesses_left db 10
+    ; align 4
+    incorrect_chars_arr db "Incorrect guesses: ",0,0,0,0,0,0,0,0,0,0,10,0 ;the amount of 0 should match the guesses_left + null terminator
+    incorrect_chars_l equ $-incorrect_chars_arr
 
 section .bss
      secret_word resb 20; reserving 20 bytes for the secret word
      guessed_word resb 20
      curr_guessed_char resb 1
-     guessed_chars_arr resb 13; ??? verify how many tries we have
+     guessed_chars_arr resb 10 ; ??? TODO fix this part
 ; -----
 
 section .text
@@ -20,6 +23,7 @@ extern print_instruction
 extern read_guess
 extern process_guess
 extern initialise_guessed_word
+extern update_incorrect_guesses
 
 _start:
 ; mov rdx, [temp2]
@@ -44,9 +48,9 @@ lea rsi, [guessed_word]
 call initialise_guessed_word
 
 ;for debbuging
-lea rsi, [guessed_word]
-mov rdx, 20                 ; get the length of the string (excluding null terminator)
-call print_instruction
+; lea rsi, [guessed_word]
+; mov rdx, 20                 ; get the length of the string (excluding null terminator)
+; call print_instruction
 
 ; Getting the guess from the user
 ;-------------------------------------------------------
@@ -65,19 +69,31 @@ mov rdx, [curr_guessed_char]
 movzx rcx, byte[guesses_left]
 call process_guess
 
-mov byte[guesses_left], cl ; cl is the lower 8 bits of rcx
+cmp rax, 1
+je CorrectGuess
+           
+lea rdi, [incorrect_chars_arr]
+; movzx rsi, byte[curr_guessed_char]
+mov rax, [curr_guessed_char]     ; curr_guessed_char is a pointer to the value
+movzx rsi, byte [rax] 
+lea rdx, [guesses_left]
+call update_incorrect_guesses
 
-lea rsi, [guessed_word]
-mov rdx, 20                 ; get the length of the string (excluding null terminator)
+CorrectGuess:
+
+lea rsi, [incorrect_chars_arr]
+mov rdx, incorrect_chars_l
 call print_instruction
 
-;  printing current guess
-mov rsi, '"10,13"
-mov rdx, 1                 ; get the length of the string (excluding null terminator)
+lea rsi, [guessed_word]
+mov rdx, 20                
 call print_instruction
 
 cmp byte[guesses_left],0
 jne NextGuess
+
+
+
 ; guesses_left is a raw int not an ascii :C
 ; movzx rsi, byte[guesses_left]  
 ; mov rdx, byte[guesses_left]              

@@ -1,8 +1,12 @@
 ; checks if guessed char matches any char in secret word
 ; updates the guessed word with the matched char
+section .data
+    already_guessed_mes db "This letter was already guessed!",10,0
+    already_guessed_mes_l equ $-already_guessed_mes
+
 section .text
 global process_guess
-
+extern print_instruction
 process_guess:
     ; rdi: address of secret word
     ; rsi: address of guessed word array
@@ -18,11 +22,14 @@ process_guess:
     cmp al, 10; check for endl terminator
     je .end
 
-      cmp al, 0; check for null terminator
+    cmp al, 0; check for null terminator
     je .end
 
     cmp al, byte[rdx]; compare guessed char with current letter
     jne .next
+
+    cmp byte[rsi], al
+    je .was_guessed
 
     mov byte [rsi], al; update guessed word with matching letter
     ; mov dl, 1; set match flag to 1
@@ -32,11 +39,12 @@ process_guess:
     inc rdi
     inc rsi
     jmp .loop
-
+.was_guessed:
+    mov r8, 1
+    lea rsi, [already_guessed_mes]
+    mov rdx, already_guessed_mes_l                
+    call print_instruction
 .end:
-    ; xor rax,rax
-    cmp r8,1
-    je .therealend
-    dec rcx
-.therealend:
+    xor rax,rax
+    mov rax, r8
     ret

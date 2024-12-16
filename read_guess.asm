@@ -85,5 +85,6 @@ read_guess:
     lea rdi,[guess_buff]           
     call clear_buffer               ; clearing possible leftovers from stdin
 
+    ; mov al, byte [guess_buff]
     lea rax,[guess_buff]            ; putting the finalised word for return
 ret
