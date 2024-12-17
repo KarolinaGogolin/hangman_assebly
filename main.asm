@@ -9,6 +9,14 @@ section .data
     incorrect_chars_arr db "Incorrect guesses: ",0,0,0,0,0,0,0,10,0 ;the amount of 0 should match the guesses_left + null terminator
     incorrect_chars_l equ $-incorrect_chars_arr
 
+    ; win msg
+    win_msg db "Congratulations! You guessed the word!",10,13,0
+    win_msg_len equ $-win_msg
+    
+    ; lose msg
+    lose_msg db "You ran out of attempts! Game over!",10,13,0
+    lose_msg_len equ $-lose_msg
+
 section .bss
      secret_word resb 20; reserving 20 bytes for the secret word
      guessed_word resb 20
@@ -25,6 +33,7 @@ extern process_guess
 extern initialise_guessed_word
 extern update_incorrect_guesses
 extern print_ascii_art
+extern check_word_complete
 
 _start:
 ; mov rdx, [temp2]
@@ -95,10 +104,28 @@ movzx rax, byte[guesses_left] ; loading a byte of guesses left into rax to zero 
 sub rdi, rax
 call print_ascii_art
 
+lea rdi, [guessed_word]
+call check_word_complete
+
+cmp rax, 1
+je GameWon
+
 cmp byte[guesses_left],0
+je GameLost
+
 jne NextGuess
 
+GameWon:
+lea rsi, [win_msg]
+mov rdx, win_msg_len
+call print_instruction
+jmp EndGame
 
+GameLost:
+lea rsi, [lose_msg]
+mov rdx, lose_msg_len
+call print_instruction
+jmp EndGame
 
 ; guesses_left is a raw int not an ascii :C
 ; movzx rsi, byte[guesses_left]  
@@ -106,6 +133,7 @@ jne NextGuess
 ; call print_instruction
 
 ; Exit system call
+EndGame:
 mov rax, SYS_exit       ; Call code for exit
 mov rdi, EXIT_SUCCESS   ; Exit program with success
 syscall
