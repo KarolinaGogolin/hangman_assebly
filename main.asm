@@ -17,6 +17,10 @@ section .data
     lose_msg db "You ran out of attempts! Game over!",10,13,0
     lose_msg_len equ $-lose_msg
 
+    ; clear console msg
+    clear_console_msg db 0x1B,'[2J',0 ; ANSI code: 0x1B = ESC, [2J = clears entire screen
+    clear_console_msg_len equ $-clear_console_msg
+
 section .bss
      secret_word resb 20; reserving 20 bytes for the secret word
      guessed_word resb 20
@@ -45,6 +49,11 @@ _start:
 ;-------------------------------------------------------
 call read_secret_function
 mov [secret_word],rax ;putting the functions result into secret_word variable
+
+; clearing console
+lea rsi, [clear_console_msg]
+mov rdx, clear_console_msg_len
+call print_instruction
 
 ;printing the secret word returned from the function for debbuging purposes for now :)
 mov rsi, [secret_word]
