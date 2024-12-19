@@ -9,6 +9,15 @@ section .data
     incorrect_chars_arr db "Incorrect guesses: ",0,0,0,0,0,0,0,10,0 ;the amount of 0 should match the guesses_left + null terminator
     incorrect_chars_l equ $-incorrect_chars_arr
 
+    ; ANSI escape codes for coloring (0x1B = ESC, [... = control sequence)
+    ; green color
+    green_color db 0x1B,'[32m',0
+    green_color_len equ $-green_color
+
+    ; red color
+    red_color db 0x1B,'[31m',0
+    red_color_len equ $-red_color
+
     ; win msg
     win_msg db "Congratulations! You guessed the word!",10,13,0
     win_msg_len equ $-win_msg
@@ -18,7 +27,7 @@ section .data
     lose_msg_len equ $-lose_msg
 
     ; clear console msg
-    clear_console_msg db 0x1B,'[2J',0 ; ANSI code: 0x1B = ESC, [2J = clears entire screen
+    clear_console_msg db 0x1B,'[2J',0
     clear_console_msg_len equ $-clear_console_msg
 
 section .bss
@@ -50,15 +59,15 @@ _start:
 call read_secret_function
 mov [secret_word],rax ;putting the functions result into secret_word variable
 
-; clearing console
+; clearing console after reading secret word
 lea rsi, [clear_console_msg]
 mov rdx, clear_console_msg_len
 call print_instruction
 
 ;printing the secret word returned from the function for debbuging purposes for now :)
-mov rsi, [secret_word]
-mov rdx, 20                 ; get the length of the string (excluding null terminator)
-call print_instruction
+; mov rsi, [secret_word]
+; mov rdx, 20                 ; get the length of the string (excluding null terminator)
+; call print_instruction
 
 ; Initialising the guess word
 ;-------------------------------------------------------
@@ -76,6 +85,11 @@ call initialise_guessed_word
 NextGuess:
 call read_guess
 mov [curr_guessed_char],rax
+
+; clearing console after user makes the guess
+lea rsi, [clear_console_msg]
+mov rdx, clear_console_msg_len
+call print_instruction
 
 ; ;printing current guess
 ; mov rsi, [curr_guessed_char]
@@ -125,12 +139,20 @@ je GameLost
 jne NextGuess
 
 GameWon:
+lea rsi, [green_color]
+mov rdx, green_color_len
+call print_instruction
+
 lea rsi, [win_msg]
 mov rdx, win_msg_len
 call print_instruction
 jmp EndGame
 
 GameLost:
+lea rsi, [red_color]
+mov rdx, green_color_len
+call print_instruction
+
 lea rsi, [lose_msg]
 mov rdx, lose_msg_len
 call print_instruction
