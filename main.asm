@@ -18,6 +18,14 @@ section .data
     red_color db 0x1B,'[31m',0
     red_color_len equ $-red_color
 
+    ; restore color
+    restore_color db 0x1B,'[0m',0
+    restore_color_len equ $-restore_color
+
+    ; clear console msg
+    clear_console_msg db 0x1B,'[2J',0
+    clear_console_msg_len equ $-clear_console_msg
+
     ; win msg
     win_msg db "Congratulations! You guessed the word!",10,13,0
     win_msg_len equ $-win_msg
@@ -26,9 +34,9 @@ section .data
     lose_msg db "You ran out of attempts! Game over!",10,13,0
     lose_msg_len equ $-lose_msg
 
-    ; clear console msg
-    clear_console_msg db 0x1B,'[2J',0
-    clear_console_msg_len equ $-clear_console_msg
+    ; end game msg
+    end_msg db "Thanks for playing. Goodbye!",10,13,0
+    end_msg_len equ $-end_msg
 
 section .bss
      secret_word resb 20; reserving 20 bytes for the secret word
@@ -47,6 +55,7 @@ extern initialise_guessed_word
 extern update_incorrect_guesses
 extern print_ascii_art
 extern check_word_complete
+extern restart_or_exit
 
 _start:
 ; mov rdx, [temp2]
@@ -146,6 +155,10 @@ call print_instruction
 lea rsi, [win_msg]
 mov rdx, win_msg_len
 call print_instruction
+
+lea rsi, [restore_color]
+mov rdx, restore_color_len
+call print_instruction
 jmp EndGame
 
 GameLost:
@@ -156,6 +169,10 @@ call print_instruction
 lea rsi, [lose_msg]
 mov rdx, lose_msg_len
 call print_instruction
+
+lea rsi, [restore_color]
+mov rdx, restore_color_len
+call print_instruction
 jmp EndGame
 
 ; guesses_left is a raw int not an ascii :C
@@ -165,7 +182,18 @@ jmp EndGame
 
 ; Exit system call
 EndGame:
+call restart_or_exit
+
+cmp rax, 1
+je RestartGame
+
+lea rsi, [end_msg]
+mov rdx, end_msg_len
+call print_instruction
+
 mov rax, SYS_exit       ; Call code for exit
 mov rdi, EXIT_SUCCESS   ; Exit program with success
 syscall
 
+RestartGame:
+jmp _start
