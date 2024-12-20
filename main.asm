@@ -39,10 +39,11 @@ section .data
     end_msg_len equ $-end_msg
 
 section .bss
-     secret_word resb 20; reserving 20 bytes for the secret word
+     secret_word resb 8; reserving 20 bytes for the secret word
      guessed_word resb 20
-     curr_guessed_char resb 1
-     guessed_chars_arr resb 10 ; ??? TODO fix this part
+     curr_guessed_char resb 8
+    ;  align 10
+    ;  guessed_chars_arr resb 3 ; ??? TODO fix this part
 ; -----
 
 section .text
@@ -84,6 +85,11 @@ mov rdi, [secret_word]
 lea rsi, [guessed_word]
 call initialise_guessed_word
 
+; mov [secret_word],rdi 
+
+; mov rsi, [secret_word]
+; mov rdx, 20                 ; get the length of the string (excluding null terminator)
+; call print_instruction
 ;for debbuging
 ; lea rsi, [guessed_word]
 ; mov rdx, 20                 ; get the length of the string (excluding null terminator)
@@ -94,6 +100,10 @@ call initialise_guessed_word
 NextGuess:
 call read_guess
 mov [curr_guessed_char],rax
+
+; mov rsi, [secret_word]
+; mov rdx, 20                 ; get the length of the string (excluding null terminator)
+; call print_instruction
 
 ; clearing console after user makes the guess
 lea rsi, [clear_console_msg]
