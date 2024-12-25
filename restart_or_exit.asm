@@ -30,31 +30,35 @@ section .bss
 section .text
     global restart_or_exit
     extern print_instruction
+    extern read_guess
 
 restart_or_exit:
+
     lea rsi, [restart_msg]
     mov rdx, restart_msg_len
     call print_instruction
 
-    ; read user choice
-    mov rax, 0
-    mov rdi, 0
-    lea rsi, [user_choice]
-    mov rdx, 1
-    syscall
+    call read_guess
+    ; ; read user choice
+    ; mov rax, 0
+    ; mov rdi, 0
+    ; lea rsi, [user_choice]
+    ; mov rdx, 1
+    ; syscall
 
     ; check user choice
-    cmp byte [user_choice], yes
+    cmp byte [rax], yes
     je .return_restart
-    cmp byte [user_choice], no
+    cmp byte [rax], no
     je .return_exit
 
     lea rsi, [invalid_choice_msg]
     mov rdx, invalid_choice_len
     call print_instruction
+    jmp restart_or_exit
 
 .return_restart
-    mov rax, 1
+    mov rax, 7
     ret
 
 .return_exit

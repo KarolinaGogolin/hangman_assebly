@@ -2,9 +2,9 @@
 ; arguments: rdi -> the addres to users input
 ; returns: rax -> the valid letter
 section .rodata
-    enter_input_msg db "Please enter your guess: ",0 ;10,13 -> \n 0 -> \0
+    enter_input_msg db "Please enter a character: ",0 ;10,13 -> \n 0 -> \0
     enter_input_msg_l equ $-enter_input_msg
-    invalid_input_msg db "The letter you entered is invalid. Please make sure it only contains english alphabet letters (a to z)",10,13,"Try again: ",0
+    invalid_input_msg db "Invalid input! You can enter only letters.",10,13,"Try again: ",0
     invalid_input_msg_l equ $-invalid_input_msg
     invalid_length_msg db "Your guess is empty. Please make sure to guess a letter.",10,13,"Try again: ",0
     invalid_length_msg_l equ $-invalid_length_msg
