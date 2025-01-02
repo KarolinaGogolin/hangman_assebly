@@ -1,15 +1,7 @@
-; This is a pretty simple implementation of the function
-; Below you'll find the list of known problems
+; Function that asks the user if they want to play again and processes their choice
 
-; ---------- PROBLEMS WITH FUNCTION ----------
-; doesn't properly check the user choice:
-    ; when user inputs anything other than 'y' it still contiues the game
-        ; exceptions: 
-            ; when user inputs 'n' it leaves the game
-            ; when user inputs 'n...' it leaves the game while writing other characters to the console (need to clear the buffer)
-    ; the 'guesses_left' are not cleared when the game restarts
-
-; returns rax = 1 if user wants to restart, 0 if not
+; returns rax = 7 if user wants to restart, 0 if not
+; why not 1 but 7 you might ask? Thats because this is the original number of attempts left and can be used to restore them in main
 
 section .data
     ; restart msg
@@ -39,12 +31,6 @@ restart_or_exit:
     call print_instruction
 
     call read_guess
-    ; ; read user choice
-    ; mov rax, 0
-    ; mov rdi, 0
-    ; lea rsi, [user_choice]
-    ; mov rdx, 1
-    ; syscall
 
     ; check user choice
     cmp byte [rax], yes

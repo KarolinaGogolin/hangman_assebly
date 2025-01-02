@@ -8,7 +8,6 @@ section .bss
     buffer_length resb 1    ; variable to store the buffer length passed in rsi
 section .text
     global clear_buffer
-    extern is_valid_length
 
 clear_buffer:
     ;clearing the data within the buffers size 
@@ -16,9 +15,6 @@ clear_buffer:
     cmp rsi,0               ; if the length to clear is 0 then jump straight to clearing stdin
     je OnlyClearStdin
     mov [buffer_length],rsi
-
-    call is_valid_length    ; getting the length of the input string before clearing it
-    ; cant remove is_valid_length cause it doesnt work correctly without it?????????????
 
     mov rcx,[buffer_length]
     rep stosb               ; this clears only the size of the buffer (if the user input more chars than buffer_length we will need to clear stdin)  
@@ -66,36 +62,3 @@ clear_buffer:
     Exit:
     ;---------------------------------------
 ret
-
-; This function takes a string that the user input and clears it, then if the length of the input string is equal or more than 20 it also clears the stdin
-; arguments: rdi -> the addres to users input
-; returns: nothing
-; section .bss
-;     temp_buffer resb 1 ;temp buffer for clearing stdin
-
-; section .text
-;     global clear_buffer
-;     extern is_valid_length
-
-; clear_buffer:
-
-;     call is_valid_length ; getting the length of the input string before clearing it
-;     mov rcx,20
-;     rep stosb ; this clears only the size of the buffer (if the user input more than 20 chars we will need to clear stdin)
-
-;     cmp rax,20 ; if the users input is smaller than 20 then it means stdin is empty -> jump to exit
-;     jl Exit
-
-;     ; mov rax, 0                  ; sys_read system call
-;     mov rdi, 0                  ; stdin file descriptor
-;     lea rsi, [temp_buffer]      ; Temporary buffer for flushing
-;     mov rdx, 1                  ; Read one byte at a time
-;     FlushLoop:
-;     mov rax, 0                  ;setting up rax again because syscall changes it to 1
-;     syscall                     ; read which automatically moves the pointer to the next unread char
-;     ; cmp rax, 0                  ; check for null
-;     ; je Exit
-;     cmp byte [temp_buffer], 10  ; If is not newline, jump back to loop
-;     jne FlushLoop
-;     Exit:
-; ret

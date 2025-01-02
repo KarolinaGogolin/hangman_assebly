@@ -1,5 +1,4 @@
 ; This function takes a string that the user input and counts the length
-; arguments: rdi -> the addres to users input
 ; returns: rax -> the valid letter
 section .rodata
     enter_input_msg db "Please enter a character: ",0 ;10,13 -> \n 0 -> \0

@@ -44,7 +44,7 @@ section .bss
 
 section .text
 global _start
-; Declare the external function
+; Declare the external functions
 extern read_secret_function 
 extern print_instruction
 extern read_guess
@@ -55,6 +55,7 @@ extern print_ascii_art
 extern check_word_complete
 extern restart_or_exit
 extern clear_incorrect_chars_arr
+extern clear_buffer
 
 _start:
 ; Getting the word to guess from the user
@@ -179,12 +180,16 @@ mov rdx, restore_color_len
 call print_instruction
 jmp EndGame
 
-; Asking the user whether to restart the game or quit
+; Asking the user whether to restart the game or quit and clearing variables in case of restart
 ;-------------------------------------------------------
 EndGame:
 
 lea rdi, [incorrect_chars_arr]
 call clear_incorrect_chars_arr
+
+mov rsi,20
+lea rdi, [guessed_word]          ; clearing the guessed word
+call clear_buffer
 
 call restart_or_exit
 mov [guesses_left],rax

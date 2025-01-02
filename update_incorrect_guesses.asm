@@ -15,17 +15,15 @@ update_incorrect_guesses:
     ; rdx: address of remaining attempts
     push rdi ; saving the original start address of the array
     add rdi,19 ; skipping the "Incorrect guesses: "
-    ; mov al, byte [rdi] ; check first char in array
+    
 .loop:
-    ; cmp al, 0 ; uf null terminator, found empty slot
-    cmp byte[rdi],0
+    cmp byte[rdi],0 ; uf null terminator, found empty slot
     je .add_guess
 
     cmp byte[rdi], sil
     je .already_guessed
 
     inc rdi ; move to next character
-    ; mov al, byte [rdi]; moad next character
     jmp .loop
 .already_guessed:
     pop rdi
@@ -34,9 +32,7 @@ update_incorrect_guesses:
     call print_instruction 
     ret
 .add_guess:
-    ; lea rdi, [rsi]
     mov byte[rdi],sil
-    ; mov byte [rdi], sil ; add guessed char to array
     dec dword [rdx] ; decrement remaining attempts
     pop rdi
     ret

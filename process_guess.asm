@@ -1,4 +1,4 @@
-; checks if guessed char matches any char in secret word
+; Function that checks if guessed char matches any char in secret word
 ; updates the guessed word with the matched char
 section .data
     already_guessed_mes db "This letter was already guessed!",10,0
@@ -12,9 +12,8 @@ process_guess:
     ; rsi: address of guessed word array
     ; rdx: guessed char
     ; rcx: guesses left
-    ; rcx: address to update match status (1 if match, 0 if no match)
+    ; rax: address to update match status (1 if match, 0 if no match)
     
-    ; mov bl, 0
     mov r8, 0; initialize match flag to 0
 
 .loop:
@@ -32,8 +31,7 @@ process_guess:
     je .was_guessed
 
     mov byte [rsi], al; update guessed word with matching letter
-    ; mov dl, 1; set match flag to 1
-    mov r8, 1
+    mov r8, 1 ; set match flag to 1
 .next:
     ; move to nex char (secret then guesses)
     inc rdi

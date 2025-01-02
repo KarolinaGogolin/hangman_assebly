@@ -1,5 +1,6 @@
+; function that is responsible for printing the current state of the hangman
+; rdi -> index of the stage it should print (computed from attempts left in main)
 section .data
-    ; stage1 dw 10,10,10,10,10,10,10,"=========",10,0
     stages dq stage1,stage2,stage3,stage4,stage5,stage6,stage7,stage8
     stage1 dw 10,"       ",10,"       ",10,"       ",10,"       ",10,"       ",10,"       ",10,"=========",10,0 ;putting spaces to ensure even lengths
     length equ $-stage1

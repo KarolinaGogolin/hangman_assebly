@@ -1,3 +1,6 @@
+; funcion used for printing to decrease the amount of code
+; rsi -> the thing to print
+; rdx -> the length to of the thing to print
 section .text
     global print_instruction
 

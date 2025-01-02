@@ -7,15 +7,13 @@ section .text
 initialise_guessed_word:
 ; Initialisation
 ;-------------------------------------------------------
-    ; mov rsi, rdi        ; putting the users input into rsi
-    ; xor rax,rax         ; clearing rax
     xor rdx, rdx
 
 ; Looping through the whole input to get the length
 ;-------------------------------------------------------
-    CheckLoop: ;apparently cannot use al because it is lower part of rax and overwriting my return value so im using dl instead
-
-        mov al, byte[rdi+rdx] ;putting current char into dl
+    CheckLoop:
+    
+        mov al, byte[rdi+rdx] ;putting current char into al
 
         cmp al, 0     ; checking for null at the end
         jle Exit      ; if current char is null then exit
