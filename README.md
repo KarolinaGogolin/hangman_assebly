@@ -4,6 +4,16 @@
 
 This tutorial will guide you through building a hangman game in x86-64 assembly language. We will use [YASM](http://yasm.tortall.net/) as our assembler and Linux system calls for I/O operations. The game will include functionality like word guessing, displaying the hangman stages, etc.
 
+### What is Assembly?
+
+Assembly language is a “low-level” language and provides the basic instructional interface to the computer processor. Assembly language is as close to the processor as you can get as a programmer. Programs written in a high-level language are translated into assembly language in order for the processor to execute the program. The high-level language is an abstraction between the language and the actual processor instructions.
+
+Assembly language gives you direct control of the system's resources. This involves setting processor registers, accessing memory locations, and interfacing with other hardware elements. This requires a significantly deeper understanding of exactly how the processor and memory work.
+
+### Why Assembly?
+
+Here, we can rephrase the proposal we made to the teachers and maybe add something on top of it.
+
 ## Prerequisites
 
 - Familiarity with x86-64 assembly.
@@ -280,9 +290,57 @@ initialise_guessed_word.asm:
     - `jmp CheckLoop` - repeats the loop.
   - `Exit` - ends the function and returns control to the caller.
 
+``` asm
+-------------------- to_lower_case_function.asm --------------------
+
+
+```
+
+- text
+
 ### 2. Input
 
+``` asm
+-------------------- read_secret_function.asm --------------------
+
+
+```
+
+- text
+
+``` asm
+-------------------- read_guess.asm --------------------
+
+
+```
+
+- text
+
+``` asm
+-------------------- is_valid_input.asm --------------------
+
+
+```
+
+- text
+
+``` asm
+-------------------- is_valid_length.asm --------------------
+
+
+```
+
+- text
+
 ### 3. Processing
+
+``` asm
+-------------------- clear_buffer.asm --------------------
+
+
+```
+
+- text
 
 ``` asm
 -------------------- main.asm --------------------
@@ -381,8 +439,8 @@ update_incorrect_guesses:
 .already_guessed:
     pop rdi
     lea rsi, [already_guessed_mes]
-    mov rdx, already_guessed_mes_l                
-    call print_instruction 
+    mov rdx, already_guessed_mes_l
+    call print_instruction
     ret
 
 .add_guess:
@@ -457,7 +515,7 @@ call print_instruction
 
 ``` asm
 lea rsi, [guessed_word]
-mov rdx, 20                
+mov rdx, 20
 call print_instruction
 ```
 
@@ -498,7 +556,7 @@ print_ascii_art:
     add rax, rbx
     mov rax,[rax]
     lea rsi, [rax]
-    mov rdx, length                
+    mov rdx, length
     call print_instruction
     ret
 ```
@@ -650,10 +708,10 @@ call process_guess
 ; if the guess was correct then there is no need to update the incorrect_chars_arr and guesses left
 cmp rax, 1
 je CorrectGuess
-           
+
 lea rdi, [incorrect_chars_arr]
 mov rax, [curr_guessed_char]     ; curr_guessed_char is a pointer to the value
-movzx rsi, byte [rax] 
+movzx rsi, byte [rax]
 lea rdx, [guesses_left]
 call update_incorrect_guesses
 
@@ -703,47 +761,63 @@ mov rdi, EXIT_SUCCESS   ; Exit program with success
 syscall
 ```
 
-I am not sure if we need to add the `restart_or_exit` here. But I also don't know where it would be appropriate to put in the context of the numbered list below
+``` asm
+-------------------- clear_incorrect_chars_arr.asm --------------------
 
-1. Initialization
+```
 
-- [ ] `init_game_state`: set up initial game vars
-- [x] `read_secret`: read secret from user (use `read_char` as potential template) KAROLINA
-- [x] `validate_secret`: ensure that secret is valid (use `validate_char` as potential template) KAROLINA
-  - eng only
-  - no num, symb and basically anything that is not alphabetical letter
-- [x] `convert_to_lower`: convert secret to uppercase KAROLINA
-- [x] `load_secret`: load secret into mem KAROLINA
+- text
 
-2. Input
+``` asm
+-------------------- restart_or_exit.asm --------------------
+section .data
+   restart_msg db "Do you want to restart the game? (y/n)",10,13,0
+   restart_msg_len equ $-restart_msg
 
-- [ ] `read_char`: read char from user KAROLINA
-- [ ] `validate_char`: ensure that char is valid (same as `validate_secret`) KAROLINA
-- [ ] `convert_to_lower`: same function from input, but for char KAROLINA
+   invalid_choice_msg db "Invalid choice. Please enter 'y' or 'n'",10,13,0
+   invalid_choice_len equ $-invalid_choice_msg
 
-3. Processing
+   yes equ 'y'
+   no equ 'n'
 
-- [ ] `process_guess`: check if char is in secret and update game state MADI
-- [ ] `check_win`: cmp guess arr with secret MADI
-- [ ] `check_lose`: check if attempts == 0 MADI
+section .bss
+   user_choice resb 1
 
-4. Ouput
+section .text
+   global restart_or_exit
+   extern print_instruction
+   extern read_guess
 
-- [ ] `display_game_state`: prints
-  - guess arr (underscores)
-  - incorrect arr
-  - attempts left
-  - ASCII art
-- [ ] `display_end_msg`: display whether user won or lost, along secret
-- [ ] `play_again`: ask user if they want to play again
+restart_or_exit:
+   lea rsi, [restart_msg]
+   mov rdx, restart_msg_len
+   call print_instruction
 
-5. Main Control
+   call read_guess
 
-- [ ] `main_game_loop`:controls flow of game including,
-  - repeated input
-  - processing guesses
-  - checking conditions
-- [ ] `restart_or_exit`: handles restart or exit decision at the end of the game
+   cmp byte [rax], yes
+   je .return_restart
+
+   cmp byte [rax], no
+   je .return_exit
+
+   lea rsi, [invalid_choice_msg]
+   mov rdx, invalid_choice_len
+   call print_instruction
+   jmp restart_or_exit
+
+.return_restart
+   mov rax, 7
+   ret
+
+.return_exit
+   mov rax, 0
+   ret
+```
+
+- `restart_or_exit` - function reads the user choice, and will act upon their choice. It will keep asking the user to make a choice until they give correct answer, which is `y` or `n`.
+- `.return_restart` - when user choses `y` as an option, function returns `7`. The reason on why it returns `7` and not `1` like in other functions, is because the game allows seven guesses for player to make. In `main.asm`, after calling the function, we load `7` back to `guesses_left`.
+- `.return_exit` - when user choses `n` as an option, function returns `0`.
 
 ## Compile and Run
 
@@ -758,54 +832,7 @@ If you want to debug the program, simply add `DDD` or `GDB` arguments after `./r
 
 I dont think we need to actually include this bash script. Instead we can refer to the assembly book that has a nice skeleton of it already.
 
-``` bash
-#!/bin/bash
-
-# Set the program name
-PROGRAM="hangman"
-
-# Compilation and linking options
-ASM_FLAGS="-g dwarf2 -f elf64" # Yasm assembly flags (64-bit and debug info)
-LD_FLAGS="-g"                 # Linker flags (include debug info)
-
-# Find all .asm files in the current directory
-FILES=$(find . -maxdepth 1 -name "*.asm" -print)
-OUTPUT_FILES=""
-
-# Assemble the files
-echo "Assembling source files..."
-for file in $FILES; do
-    obj_file="${file%.asm}.o"
-    lst_file="${file%.asm}.lst"
-    OUTPUT_FILES+="$obj_file "
-    echo "Assembling $file -> $obj_file and generating listing $lst_file..."
-    yasm $ASM_FLAGS -o "$obj_file" "$file" -l "$lst_file"
-    if [ $? -ne 0 ]; then
-        echo "Error assembling $file. Exiting."
-        exit 1
-    fi
-done
-
-# Link the object files
-echo "Linking to create $PROGRAM..."
-ld $LD_FLAGS -o "$PROGRAM" $OUTPUT_FILES
-if [ $? -ne 0 ]; then
-    echo "Error during linking. Exiting."
-    exit 1
-fi
-
-# Run or debug the program based on the argument
-if [ "$1" == "ddd" ]; then
-    echo "Starting debugger..."
-    ddd $PROGRAM
-elif [ "$1" == "gdb" ]; then
-    echo "Starting debugger..."
-    gdb $PROGRAM
-else
-    echo "Running $PROGRAM..."
-    ./$PROGRAM
-fi
-```
+Sure, we can do that. I thought the chapter was quite short, because of that I included the script to make it a bit longer.
 
 ## Conclusion
 
