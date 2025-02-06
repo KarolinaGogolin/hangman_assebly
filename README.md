@@ -25,15 +25,19 @@ Learning assembly has multiple advantages. Most importantly, it helps in underst
 
 Multiple resources were used while working on this project. It is highly recommended to read a book on the subject to understand the theory before starting (link below). When researching online, it is important to note that most resources cover different types of assembly. However, these articles can still be helpful in understanding the logic behind certain functions so if you find something relevant to your problem do not instantly skip it.
 
-- Assembly book http://www.egr.unlv.edu/~ed/x86.html
-- Getting started with assembly https://p403n1x87.github.io/getting-started-with-x86-64-assembly-on-linux.html
-- User's input and output https://cratecode.com/info/x86-assembly-nasm-user-input-output
-- Clearing buffer https://stackoverflow.com/questions/63840074/clear-input-buffer-assembly-x86-nasm/63840815#63840815
-- Searchable Linux Syscall Table https://filippo.io/linux-syscall-table/
-- Hex, decimal and binary converter (helpful for debugging) https://www.rapidtables.com/convert/number/hex-to-decimal.html?x=F4
-- ASCII https://www.alpharithms.com/ascii-table-512119/
-- Cheatsheet https://cs.brown.edu/courses/cs033/docs/guides/x64_cheatsheet.pdf
-- ASCII art of hangman https://gist.github.com/chrishorton/8510732aa9a80a03c829b09f12e20d9c
+- [Assembly book](http://www.egr.unlv.edu/~ed/x86.html)
+- [Gettin started with assembly](https://p403n1x87.github.io/getting-started-with-x86-64-assembly-on-linux.html)
+- [User's input and output](https://cratecode.com/info/x86-assembly-nasm-user-input-output)
+- [Clearing buffer](https://stackoverflow.com/questions/63840074/clear-input-buffer-assembly-x86-nasm/63840815#63840815)
+- [Searchable Linux Syscall Table](https://filippo.io/linux-syscall-table/)
+- [Hex, decimal and binary converter (helpful for debugging)](https://www.rapidtables.com/convert/number/hex-to-decimal.html?x=F4)
+- [ASCII](https://www.alpharithms.com/ascii-table-512119/)
+- [Cheatsheet](https://cs.brown.edu/courses/cs033/docs/guides/x64_cheatsheet.pdf)
+- [ASCII art of hangman](https://gist.github.com/chrishorton/8510732aa9a80a03c829b09f12e20d9c)
+- [Assembly Language Reference](https://docs.oracle.com/cd/E19641-01/802-1948/802-1948.pdf)
+- [Linux Assembly Development (pretty convoluted website)](https://asm.sourceforge.net)
+- [Intel manual](https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html)
+- [ANSI codes](https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797)
 
 
 ## High Level Design of the Project
