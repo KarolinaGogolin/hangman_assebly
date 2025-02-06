@@ -12,14 +12,29 @@ Assembly language gives you direct control of the system's resources. This invol
 
 ### Why Assembly?
 
-Here, we can rephrase the proposal we made to the teachers and maybe add something on top of it.
+Learning assembly has multiple advantages. Most importantly, it helps in understanding code on a deeper level. Since assembly primarily interacts with registers and memory addresses, it requires a strong grasp of pointers and memory management. These two concepts are crucial in all programming languages, especially in C, C++, and embedded systems programming. Working on this project has deepened our understanding of how programming works "under the hood" and will undoubtedly be valuable in the future when writing and debugging code.
 
 ## Prerequisites
 
-- Familiarity with x86-64 assembly.
+- Familiarity with C/C++ (or other programming language however those are recommended)
 - Basic understanding of Linux system calls.
 - Installed YASM assembler and linker.
 - Debugger (DDD or GDB)
+
+## Learning sources used
+
+Multiple resources were used while working on this project. It is highly recommended to read a book on the subject to understand the theory before starting (link below). When researching online, it is important to note that most resources cover different types of assembly. However, these articles can still be helpful in understanding the logic behind certain functions so if you find something relevant to your problem do not instantly skip it.
+
+- Assembly book http://www.egr.unlv.edu/~ed/x86.html
+- Getting started with assembly https://p403n1x87.github.io/getting-started-with-x86-64-assembly-on-linux.html
+- User's input and output https://cratecode.com/info/x86-assembly-nasm-user-input-output
+- Clearing buffer https://stackoverflow.com/questions/63840074/clear-input-buffer-assembly-x86-nasm/63840815#63840815
+- Searchable Linux Syscall Table https://filippo.io/linux-syscall-table/
+- Hex, decimal and binary converter (helpful for debugging) https://www.rapidtables.com/convert/number/hex-to-decimal.html?x=F4
+- ASCII https://www.alpharithms.com/ascii-table-512119/
+- Cheatsheet https://cs.brown.edu/courses/cs033/docs/guides/x64_cheatsheet.pdf
+- ASCII art of hangman https://gist.github.com/chrishorton/8510732aa9a80a03c829b09f12e20d9c
+
 
 ## High Level Design of the Project
 
@@ -123,10 +138,6 @@ END:
         Jump to START
     Exit
 ```
-
-## Cheatsheet
-
-Although it is assumed that the reader knows the Assembly syntax, not everyone remembers what each keyword represents. Therefore, we have comprimised a cheatsheat for you before showing the implementation of the game.
 
 ### Registers
 
@@ -290,57 +301,255 @@ initialise_guessed_word.asm:
     - `jmp CheckLoop` - repeats the loop.
   - `Exit` - ends the function and returns control to the caller.
 
-``` asm
--------------------- to_lower_case_function.asm --------------------
-
-
-```
-
-- text
-
 ### 2. Input
+The `read_secret_function` is one of the longest and most complex functions in this game. Its primary responsibility is to handle user input, process it, and return a pointer to the saved secret word. This function relies on several helper functions, which will be detailed in the next section about input processing. Notably, many of these helper functions, such as `clear_buffer`, were later reused in other parts of the program.
+
+The `read_guess` function was developed based on the `read_secret_function` and shares a very similar implementation. The key difference lies in the size of the desired input. While the `read_secret_function` is designed to handle up to 20 bytes (the maximum size of a secret word), the `read_guess function` limits input to a single byte (the length of one guess). Consequently, in functions requiring a specified maximum number of bytes, this value is adjusted from 20 to 1.
+
+Given their similarities, the `read_guess` function will not be discussed in detail, as it follows the same principles and structure as the `read_secret_function`.
 
 ``` asm
+-------------------- main.asm --------------------
+ ; code...
+call read_secret_function
+mov [secret_word],rax ; putting the functions result into secret_word variable
+ ; code...
 -------------------- read_secret_function.asm --------------------
+ ; code...
+read_secret_function:
+    
+    ;printing initial instructions:
+    lea rsi, [welcome_msg]      ; address of the instruction to be displayed
+    mov rdx, welcome_msg_l      ; length of the instruction to be displayed
+    call print_instruction      ; using a function to set rax,rdi and syscall for printing to console for brevity
 
+; Loop for user input
+;-------------------------------------------------------
+    InvalidInput:   
+   
+    mov rsi,20
+    lea rdi, [secret_word]          ; clearing the buffer(secret_word + stdin)
+    call clear_buffer
+                                    ; taking the input from the user -> could be put into separate functions but wanted to keep it here since its the main point of this function
+    mov rax, 0                      ; sys_read system call
+    mov rdi, 0                      ; file descriptor 0 -> stdin
+    lea rsi, [secret_word]          ; load the address of the destination
+    mov rdx, 20                     ; max number of bytes to read (if user writes more only the 20 will be checked and saved if valid)
+    syscall
 
+; Checking for the valid length
+;-------------------------------------------------------
+    lea rdi, [secret_word]          ; checking if the words length is at least 5
+    call is_valid_length
+
+    cmp rax, 4
+    jg CheckIsValidInput            ; if valid length then proceed to check chars validity
+
+    ; Invalid length
+    ;---------------------------------------
+    lea rsi, [invalid_length_msg]   ; displaying instruction informing of invalid input
+    mov rdx, invalid_length_msg_l
+    call print_instruction
+
+    jmp InvalidInput                ; going back to input
+
+; Checking for valid characters
+;-------------------------------------------------------
+    CheckIsValidInput:
+
+    lea rdi, [secret_word]  
+    call is_valid_input             ; checking if the input chars are valid
+
+    cmp rax, 1
+    je ValidInput                   ; if valid jump to processing the users input
+
+    ; Invalid characters
+    ;---------------------------------------
+    lea rsi, [invalid_input_msg]    ; displaying instruction informing of invalid input
+    mov rdx, invalid_input_msg_l
+    call print_instruction
+
+    jmp InvalidInput                ; going back to input
+
+; Finalising the valid word
+;-------------------------------------------------------
+    ValidInput:
+   
+    lea rsi, [valid_input_msg]
+    mov rdx, valid_input_msg_l 
+    call print_instruction
+
+    lea rdi, [secret_word]          ; changing the secret word to all lowercase
+    call to_lower_case_function
+    
+    mov rsi,0
+    lea rdi,[secret_word]            
+    call clear_buffer   
+
+    lea rax,[secret_word]           ; putting the finalised word for return
+ret
 ```
 
-- text
+read_secret_function (and read_guess) logic:
 
-``` asm
--------------------- read_guess.asm --------------------
+1) Display instruction for the user using variables predefined in `.rodata` (read-only data often used for this purpose) containing messages and `print_instruction`
+2) Clear the buffer using `clear_buffer`(if it is the first input it will not do much but in case it is a retry it is essential to get rid of all the residue from the previous input)
+3) Let the user input the word
+4) Validate the guess:
+    - check if the length is at least 5 by calling `is_valid_length` - if not valid jump to point 2) and display a message for the user informing what is wrong
+    - check if the input contains only letters of the english alphabet from a to z (lower or upper case) using `is_valid_input` - if not valid jump to point 2) and display a message for the user informing what is wrong
+5) Finalise the word by:
+    - informing the user that their input was saved
+    - transforming the word into all lower case letters using `to_lower_case_function`
+    - clearing the buffer using `clear_buffer` but only clearing the stdin buffer not the word.
 
-
-```
-
-- text
-
-``` asm
--------------------- is_valid_input.asm --------------------
-
-
-```
-
-- text
+### 3. Processing input
 
 ``` asm
 -------------------- is_valid_length.asm --------------------
+section .text 
+    global is_valid_length
 
+is_valid_length:
+; Initialisation
+;-------------------------------------------------------
+    mov rsi, rdi        ; putting the users input into rsi
+    xor rax,rax         ; clearing rax
 
+; Looping through the whole input to get the length
+;-------------------------------------------------------
+    CheckLoop: ;apparently cannot use al because it is lower part of rax and overwriting my return value so im using dl instead
+
+        mov dl, byte[rsi] ;putting current char into dl
+
+        cmp dl, 0     ; checking for null at the end
+        jle Exit      ; if current char is null then exit
+
+        cmp dl, 10    ; checking for lf character (the end of the line char)
+        je Exit       ; if true then exit
+
+        jmp NextChar ; jumping to increment the current char
+
+    NextChar:  
+        inc rsi
+        inc rax
+        jmp CheckLoop
+    Exit:
+ret
 ```
+`is_valid_length` checks for the length of the word. It takes 1 argument which is the string that the user has input. Then it iterates through the string and counts each letter. When it finds the end it returns the number of letters. Originally the function returned 0 or 1 and was comparing the number of letters with a number of them that would be considered valid but to make it more flexible it was decided that it will just return the counted letters so that then it could be reused also for different purposes.
 
-- text
+``` asm
+-------------------- is_valid_input.asm --------------------
+is_valid_input:
+; Initialisation
+;-------------------------------------------------------
+    mov rsi, rdi       ;putting the users input into rsi
+    mov rax,TRUE       ;defaulting true
 
-### 3. Processing
+; Looping through the input
+;-------------------------------------------------------
+    CheckLoop:
+
+        mov dl, byte[rsi] ;putting current char into dl
+
+        cmp dl, 0     ; checking for null at the end
+        jle Exit      ; if current char is null then exit
+
+        cmp dl, 10    ; checking for lf character (the end of the line char)
+        je Exit       ; if true then exit
+
+        cmp dl, 'A'   
+        jl ExitFalse  ; if the character is smaller than 'A' then input is invalid
+
+        cmp dl, 'z'     
+        jg ExitFalse  ; if the character is bigger than 'z' then input is invalid
+
+        cmp dl, 'Z'
+        jg CheckASCIIBetween91And96 ; if the current char is bigger then 'Z' jumping to check if it is inbetween lower and uppercase letters on ASCII table
+
+        jmp NextChar ; jumping to increment the current char
+    ExitFalse:
+        mov rax, FALSE
+        ret
+    NextChar:  
+        inc rsi
+        jmp CheckLoop
+    CheckASCIIBetween91And96:
+        cmp dl, 'a'
+        jl ExitFalse    ; if the current char is smaller than 'a' its invalid input
+        jmp NextChar
+    Exit:
+ret
+```
+`is_valid_input` fucntion checks whether the string that the user input containts any illegal characters. That is, any characters that are not english letters (case insensitive). It operates based on the ASCII table, meaning that every letter smaller than 'A', bigger than 'z' and between 'Z' and 'a' is considered invalid. If an invalid character is found it returns false, otherwise it returns true.
+
+``` asm
+-------------------- to_lower_case_function.asm --------------------
+to_lower_case_function:
+    mov rsi, rdi       ; putting the users input into rsi
+
+    CheckLoop: 
+
+        mov al, byte[rsi] ; putting current char into dl
+
+        cmp al, 0
+        jle Exit
+
+        cmp al, 10
+        je Exit
+
+        cmp al, 'a'   
+        jl ToLowerCase  ; if the character is smaller than 'a' that means it's uppercase because this function is called after validating the input
+
+        jmp NextChar ; jumping to increment the current char
+
+    ToLowerCase:
+        add al, 32
+        mov byte [rsi], al  ; updating the rsi with lowercase letter
+        jmp NextChar
+    NextChar:  
+        inc rsi
+        jmp CheckLoop
+    Exit:
+ret
+```
+`to_lower_case_function` iterates through the word (it is assumed that it is called after the `is_valid_input` so the word only contains valid letters- lower or uppercase). It checks if each letter is smaller than `a` and if it is that means that it must be uppercase. It then adds `32` to the letter to convert it to lowercase. This is based on the ASCII code for letters and the fact that the difference between each letter's upper case and lower case is 32. It returns the changed word.
 
 ``` asm
 -------------------- clear_buffer.asm --------------------
-
-
 ```
 
-- text
+`clear_buffer` function takes a string that the user input and clears it, then if the length of the input string is bigger than the buffer it also clears the stdin. In case the passed length is 0, then the function does not clear the content that was passed in rdi but only clears stdin buffer.
+
+- arguments: 
+    - rdi -> the addres to users input - how much input should be cleared from the buffer
+    - rsi -> the length of the buffer
+- returns: nothing
+
+The purpose of this function is to clear the buffer (as the name suggests). To make it more flexible an extra argument was added that allows the user to specify how much of the string passed should also be cleared. This means that if the string was entered and the user does not want to clear it but only erease the stdin buffer then they can pass 0 as the length and the word will be left untouched.
+
+This is the function that was the most problematic when but also cruicial when working with user's input. It is really important to foolproof the program from the user who can try to input more characters then the buffer storing them can handle. 
+
+``` asm
+-------------------- clear_buffer.asm --------------------
+; code...
+ mov rcx,[buffer_length]
+    rep stosb               ; this clears only the size of the buffer (if the user input more chars than buffer_length we will need to clear stdin)  
+
+    cmp rdi,0
+    je Exit
+; code..
+```
+This is what clears the string that was input 'legally' by the user. That means that this clears the content of the buffer that stores the word but does not clear the stding buffer.
+
+To check whether there is any data left to clear in `stdin buffer` a `select syscall` is used. I would highly advice to read on the possible syscalls when learning assembly since they can have multiple usefull functionalities. If there is anything in the stdin buffer then we enter a loop that iterates over it until there is nothing there to clear. 
+
+Since this function is commented very thoroughly we also recommend to refer to it in case of any further questions regarding implementation and use of select syscall.
+
+*(Note: The select syscall may not be the most optimal solution, as it can be quite complicated. However, it is a functional and working solution.(The author of this code just has tendency to overcomplicate :D ))*
+
+### 3. Processing guesses
 
 ``` asm
 -------------------- main.asm --------------------
@@ -451,7 +660,7 @@ update_incorrect_guesses:
 ```
 
 - `update_incorrect_guesses` - prepares for processing incorrect guesses.
-  - `push rdi` - saves the value of `rdi` on the stack to restore it ltaer.
+  - `push rdi` - saves the value of `rdi` on the stack to restore it later.
   - `add rdi, 19` - adjusts `rdi` to point to the start of the incorrect guesses section in memory (basically, skipping the "Incorrect guesses: " from main).
 - `.loop` - iterates through the incorrect guesses array to check if the guessed letter is already present.
 - `.already_guessed` - handles the case where the guessed letter is already in the incorrect guesses array.
@@ -660,159 +869,38 @@ call print_instruction
 
 ### 5. Main Control
 
-``` asm
-_start:
-; Getting the word to guess from the user
-;-------------------------------------------------------
-call read_secret_function
-mov [secret_word],rax ; putting the functions result into secret_word variable
+Simplified main function logic:
+1) Getting the word to guess from the user (`read_secret_function`)
+2) Clearing console after reading secret word
+3) Initialising the guess word (`initialise_guessed_word`)
+4) Printing the initial game state (incl. state of the guessed word, incorrectly guessed characters and the state of hangman)
+5) Getting the guess from the user (`read_guess`)
+6) Processing the guess (comparing it with the secret word and updating the curr_guessed_char_arr and guesses_left) (`process_guess`)
+7) Printing updated game status (hangman,incorrect guesses, guessed word)
+8) Checking if the game was lost, won or should continue (if continue jump to 5) )
+9) Displaying message for a winner :D/ Displaying message for loser :c
+10) Asking the user whether to restart the game or quit
+11) Cleanup and preparation of variables if user wants to restart. If restarted jump to point 1)
 
-; clearing console after reading secret word
-lea rsi, [clear_console_msg]
-mov rdx, clear_console_msg_len
-call print_instruction
-
-; Initialising the guess word
-;-------------------------------------------------------
-mov rdi, [secret_word]
-lea rsi, [guessed_word]
-call initialise_guessed_word
-
-; Printing the initial game state (incl. state of the guessed word, incorrectly guessed characters and the state of hangman)
-;-------------------------------------------------------
-call print_instruction (incorrect_chars_arr)
-
-call print_instruction (guessed_word)
-
-mov rdi, 7
-movzx rax, byte[guesses_left]
-sub rdi, rax
-call print_ascii_art (first state of hangman)
-
-NextGuess:
-; Getting the guess from the user
-;-------------------------------------------------------
-call read_guess
-mov [curr_guessed_char],rax
-
-; clearing console after user makes the guess
-
-; Processing the guess (comparing it with the secret word and updating the curr_guessed_char_arr and guesses_left)
-;-------------------------------------------------------
-mov rdi, [secret_word]
-lea rsi, [guessed_word]
-mov rdx, [curr_guessed_char]
-movzx rcx, byte[guesses_left]
-call process_guess
-
-; if the guess was correct then there is no need to update the incorrect_chars_arr and guesses left
-cmp rax, 1
-je CorrectGuess
-
-lea rdi, [incorrect_chars_arr]
-mov rax, [curr_guessed_char]     ; curr_guessed_char is a pointer to the value
-movzx rsi, byte [rax]
-lea rdx, [guesses_left]
-call update_incorrect_guesses
-
-; Printing updated game status (hangman,incorrect guesses, guessed word)
-;-------------------------------------------------------
-CorrectGuess:
-
-; Checking if the game was lost, won or should continue
-;-------------------------------------------------------
-lea rdi, [guessed_word]
-call check_word_complete
-
-cmp rax, 1
-je GameWon
-
-cmp byte[guesses_left],0
-je GameLost
-
-jmp NextGuess
-
-; Displaying message for a winner :D
-;-------------------------------------------------------
-GameWon:
-jmp EndGame
-
-; Displaying message for a loser :c
-;-------------------------------------------------------
-GameLost:
-jmp EndGame
-
-; Asking the user whether to restart the game or quit
-;-------------------------------------------------------
-EndGame:
-
-lea rdi, [incorrect_chars_arr]
-call clear_incorrect_chars_arr
-
-call restart_or_exit
-mov [guesses_left],rax
-cmp byte[guesses_left], 7
-je _start
-
-call print_instruction (end_msg)
-
-mov rax, SYS_exit       ; Call code for exit
-mov rdi, EXIT_SUCCESS   ; Exit program with success
-syscall
-```
 
 ``` asm
 -------------------- clear_incorrect_chars_arr.asm --------------------
-
 ```
 
-- text
+This function is basically a reverse of a `update_incorrect_guesses`.
+
+Function's logic:
+1) Save the original start address of the array and skip 19 chars ("incorrect guesses: ")
+2) look for null or newline- if found exit the function
+3) if another char found write a 0 in it's place
+4) move to the next char until a 10 or 0 is found
+
+**Note** *This function is the only one that is not 100% functional. When recreating this program feel free to try and fix the bug :)*
+
+**Known issue:** after restarting the game the incorrect guesses are cleared correctly. However, the first part of "Incorrect guesses: " gets cut off. After that everything still works correctly and after other restarts nothing more gets cut off. This is mostly a cosmetic fix that according to our tests does not compromise any functionality.
 
 ``` asm
 -------------------- restart_or_exit.asm --------------------
-section .data
-   restart_msg db "Do you want to restart the game? (y/n)",10,13,0
-   restart_msg_len equ $-restart_msg
-
-   invalid_choice_msg db "Invalid choice. Please enter 'y' or 'n'",10,13,0
-   invalid_choice_len equ $-invalid_choice_msg
-
-   yes equ 'y'
-   no equ 'n'
-
-section .bss
-   user_choice resb 1
-
-section .text
-   global restart_or_exit
-   extern print_instruction
-   extern read_guess
-
-restart_or_exit:
-   lea rsi, [restart_msg]
-   mov rdx, restart_msg_len
-   call print_instruction
-
-   call read_guess
-
-   cmp byte [rax], yes
-   je .return_restart
-
-   cmp byte [rax], no
-   je .return_exit
-
-   lea rsi, [invalid_choice_msg]
-   mov rdx, invalid_choice_len
-   call print_instruction
-   jmp restart_or_exit
-
-.return_restart
-   mov rax, 7
-   ret
-
-.return_exit
-   mov rax, 0
-   ret
 ```
 
 - `restart_or_exit` - function reads the user choice, and will act upon their choice. It will keep asking the user to make a choice until they give correct answer, which is `y` or `n`.
@@ -821,7 +909,7 @@ restart_or_exit:
 
 ## Compile and Run
 
-Luckily for you, reader, there is a bash script `run.sh` which already assembles, links and runs the program for you!
+Luckily for you, reader, there is a Bash script, `run.sh`, that assembles, links, and runs the program for you! It is based on the Bash script from the assembly book mentioned in the previous chapter. While this step is not strictly necessary, if you decide to separate your functions into different files (as we did), manually assembling and linking everything can be quite cumbersome. Therefore, we highly recommend using it.
 
 ``` bash
 chmod +x run.sh
@@ -829,10 +917,6 @@ chmod +x run.sh
 ```
 
 If you want to debug the program, simply add `DDD` or `GDB` arguments after `./run.sh`.
-
-I dont think we need to actually include this bash script. Instead we can refer to the assembly book that has a nice skeleton of it already.
-
-Sure, we can do that. I thought the chapter was quite short, because of that I included the script to make it a bit longer.
 
 ## Conclusion
 
